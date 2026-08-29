@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "../raices/raices.h"
-#include "../funciones/funciones_prueba.h"
-#include "../epsilon/epsilon.h"
+#include "raices/raices.h"
+#include "funciones/funciones_prueba.h"
+#include "epsilon/epsilon.h"
 
 int main(void){
     double a, b;
