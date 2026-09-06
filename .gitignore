@@ -1,5 +1,7 @@
-.venv-metodos
+.venv-metodos/
+.vscode/
 ejemplo_reporte/
 *.exe
 prueba.c
 *.pdf
+*.bin
