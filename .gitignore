@@ -1,6 +1,7 @@
 .venv-metodos/
 .vscode/
 ejemplo_reporte/
+ayudantia01/
 *.exe
 prueba.c
 *.pdf
