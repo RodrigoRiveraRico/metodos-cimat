@@ -1,7 +1,10 @@
 #include "array2D.h"
 
 
-// Reserva memoria para un arreglo 2D de tamaño nr x nc
+/*
+* Reserva memoria para un arreglo 2D de tamaño nr x nc
+* calloc() asegura que cada byte del bloque asignado contenga el valor 0
+*/
 Array2d *array2d_alloc(int nr, int nc) {
     // Reservamos memoria
     Array2d* array = (Array2d *) malloc(sizeof(Array2d));
