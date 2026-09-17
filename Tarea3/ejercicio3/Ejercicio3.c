@@ -1,6 +1,6 @@
-#include "arrays/array1D.h"
-#include "arrays/array2D.h"
-#include "sol_ecu_lin/sol_ecu_lin.h"
+#include "../arrays/array1D.h"
+#include "../arrays/array2D.h"
+#include "../sol_ecu_lin/sol_ecu_lin.h"
 #include <math.h>
 
 #define OK 1
@@ -13,8 +13,9 @@ double epsilon(void);
 
 int main(int argc, char **argv){
 
-    Array1d *b=NULL, *x=NULL;
-    Array2d *U=NULL;
+    Array2d *A=NULL;
+    Array1d *b=NULL,*x=NULL;
+    outLU *resultado=NULL;
 
     double tol = pow(epsilon(),2.0/3.0);
 
@@ -28,56 +29,68 @@ int main(int argc, char **argv){
     b = readArray1d(argv[1]);
     if(!b){return ERROR_READ_BIN;}
     
-    U = readArray2d(argv[2]);
-    if(!U){
+    A = readArray2d(argv[2]);
+    if(!A){
         freeArray1d(b);
         return ERROR_READ_BIN;
     }
-   
+
     /*Tamaño de b*/
     printf("\nEl tamano del vector b es <%zu>",b->n);
     /*Elementos de b*/
     // printf("\n");
     // printArray1d(b, "% 6.2f  ", 3);
 
-    /*Tamaño de U*/
-    printf("\nLa matriz U tiene <%zu> filas y <%zu> columnas", U->rows, U->cols);
+    /*Tamaño de A*/
+    printf("\nLa matriz A tiene <%zu> filas y <%zu> columnas", A->rows, A->cols);
     /*Elementos de U*/
     // printf("\n");
     // printArray2d(U, "% 6.2f  ", 3);
 
-    /*Obtenemos la solución*/
-    x = backwardSubstitution(U, b, tol);
+    // Factorización LU con pivoteo parcial
+    resultado = LU(A,tol);
+    if(!resultado){
+        freeArray1d(b); freeArray2d(A);
+        return ERROR_METHOD;}
+
+    if(resultado->res==SINGULAR){
+        printf("\n%s","La matriz es singular.");
+        freeArray2d(A); freeArray1d(b);
+        freeArray2d(resultado->L); freeArray2d(resultado->U); freeArray1d(resultado->p); free(resultado);
+        return SINGULAR;
+    }
+
+    // Sistema LUx = Pb
+    x = solveLU(resultado->L,resultado->U,resultado->p,b,tol);
     if(!x){
-        printf("\n%s","El sistema no tiene solucio'n u'nica.");
-        freeArray1d(b);
-        freeArray2d(U);    
+        freeArray2d(A); freeArray1d(b);
+        freeArray2d(resultado->L); freeArray2d(resultado->U); freeArray1d(resultado->p); free(resultado);
         return ERROR_METHOD;
     }
 
-    /*Elementos de x*/
+    // Elementos de x
     printf("\nLa solucio'n del sistema (mostramos los primeros y u'ltimos 3 elementos) es:\n");
     printArray1d(x, "% 6.2f  ", 3);
 
-    /*Error residual*/
-    // Vector residual: Ux-b
+    // Error residual
+    // Vector residual: Ax-b
     double r_i; /**< Entrada i-ésima del vector residual */
     double err_residual = 0;
 
-    for(size_t i=0;i<U->rows;i++){
+    for(size_t i=0;i<A->rows;i++){
         r_i = 0;
-        for(size_t j=0;j<U->cols;j++){
-            r_i += U->data[i][j] * x->data[j];
+        for(size_t j=0;j<A->cols;j++){
+            r_i += A->data[i][j] * x->data[j];
         }
         r_i -= b->data[i];
         err_residual += r_i*r_i;
     }
     err_residual = sqrt(err_residual);
 
-    printf("\nError residual ||Ux-b|| = %e",err_residual);
+    printf("\nError residual ||Ax-b|| = %e",err_residual);
 
-    freeArray2d(U); freeArray1d(b); freeArray1d(x);
-
+    freeArray2d(A); freeArray1d(b); freeArray1d(x);
+    freeArray2d(resultado->L); freeArray2d(resultado->U); freeArray1d(resultado->p); free(resultado);
     return OK;
 }
 

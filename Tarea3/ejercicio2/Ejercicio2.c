@@ -1,6 +1,6 @@
-#include "arrays/array1D.h"
-#include "arrays/array2D.h"
-#include "sol_ecu_lin/sol_ecu_lin.h"
+#include "../arrays/array1D.h"
+#include "../arrays/array2D.h"
+#include "../sol_ecu_lin/sol_ecu_lin.h"
 #include <math.h>
 
 #define OK 1
@@ -14,7 +14,7 @@ double epsilon(void);
 int main(int argc, char **argv){
 
     Array1d *b=NULL, *x=NULL;
-    Array2d *L=NULL;
+    Array2d *U=NULL;
 
     double tol = pow(epsilon(),2.0/3.0);
 
@@ -28,8 +28,8 @@ int main(int argc, char **argv){
     b = readArray1d(argv[1]);
     if(!b){return ERROR_READ_BIN;}
     
-    L = readArray2d(argv[2]);
-    if(!L){
+    U = readArray2d(argv[2]);
+    if(!U){
         freeArray1d(b);
         return ERROR_READ_BIN;
     }
@@ -40,18 +40,18 @@ int main(int argc, char **argv){
     // printf("\n");
     // printArray1d(b, "% 6.2f  ", 3);
 
-    /*Tamaño de L*/
-    printf("\nLa matriz L tiene <%zu> filas y <%zu> columnas", L->rows, L->cols);
-    /*Elementos de L*/
+    /*Tamaño de U*/
+    printf("\nLa matriz U tiene <%zu> filas y <%zu> columnas", U->rows, U->cols);
+    /*Elementos de U*/
     // printf("\n");
-    // printArray2d(L, "% 6.2f  ", 3);
+    // printArray2d(U, "% 6.2f  ", 3);
 
     /*Obtenemos la solución*/
-    x = forwardSubstitution(L, b, tol);
+    x = backwardSubstitution(U, b, tol);
     if(!x){
         printf("\n%s","El sistema no tiene solucio'n u'nica.");
         freeArray1d(b);
-        freeArray2d(L);    
+        freeArray2d(U);    
         return ERROR_METHOD;
     }
 
@@ -60,23 +60,23 @@ int main(int argc, char **argv){
     printArray1d(x, "% 6.2f  ", 3);
 
     /*Error residual*/
-    // Vector residual: Lx-b
+    // Vector residual: Ux-b
     double r_i; /**< Entrada i-ésima del vector residual */
     double err_residual = 0;
 
-    for(size_t i=0;i<L->rows;i++){
+    for(size_t i=0;i<U->rows;i++){
         r_i = 0;
-        for(size_t j=0;j<L->cols;j++){
-            r_i += L->data[i][j] * x->data[j];
+        for(size_t j=0;j<U->cols;j++){
+            r_i += U->data[i][j] * x->data[j];
         }
         r_i -= b->data[i];
         err_residual += r_i*r_i;
     }
     err_residual = sqrt(err_residual);
 
-    printf("\nError residual ||Lx-b|| = %e",err_residual);
+    printf("\nError residual ||Ux-b|| = %e",err_residual);
 
-    freeArray2d(L); freeArray1d(b); freeArray1d(x);
+    freeArray2d(U); freeArray1d(b); freeArray1d(x);
 
     return OK;
 }
