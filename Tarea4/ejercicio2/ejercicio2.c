@@ -8,12 +8,13 @@
 #define ERROR_INPUT 2
 #define ERROR_READ 4
 #define ERROR_METHOD 8
+#define ERROR_MEMORY 16
 
 int main(int argc, char **argv){
 
     SALUDO;
     Array1d *b=NULL, *x=NULL;
-    Array2d *A=NULL, *chol=NULL;
+    Array2d *A=NULL, *L=NULL;
 
     if(argc<3) {
         printf("Hay que proporcionar dos para'metros:");
@@ -37,20 +38,46 @@ int main(int argc, char **argv){
 
     printf("\n... Solving Cholesky ...\n");
     size_t n = A->rows; // Matriz cuadrada
-    chol = cholesky(A,n);
-    if(!chol){
+    L = cholesky(A,n);
+    if(!L){
         freeArray1d(b);
         freeArray2d(A);
         return ERROR_METHOD;
     }
-    printf("\n|| A - LL^T || = %f\n",frobenius(A,chol));
+    Array2d *LT = transpose_cuadrada(L,n);
+    if(!LT){
+        freeArray1d(b);
+        freeArray2d(A);
+        freeArray2d(L);
+        return ERROR_MEMORY;
+    }
+    // En C guardamos el producto LL^T
+    Array2d *C = array2d_alloc(n,n);    // Ya está inicializada en ceros
+    if(!C){
+        freeArray1d(b);
+        freeArray2d(A);
+        freeArray2d(L);
+        freeArray2d(LT);
+        return ERROR_MEMORY;
+    }
+    // Producto LL^T
+    for (size_t i = 0; i < n; i++) {
+        for (size_t j = 0; j < n; j++) {
+            for (size_t k = 0; k < n; k++) {
+                C->data[i][j] += L->data[i][k] * LT->data[k][j];
+            }
+        }
+    }
+    printf("\n|| A - LL^T || = %.10e\n",frobenius(A,C));
+    freeArray2d(LT);
+    freeArray2d(C);
 
     printf("\n... Solving LL^T x = b ...\n");
-    x = solveLLT(chol, b, n);
+    x = solveLLT(L, b, n);
     if(!x){
         freeArray1d(b);
         freeArray2d(A);
-        freeArray2d(chol);
+        freeArray2d(L);
         return ERROR_METHOD;
     }
     printf("\nSolucio'n x = ");
@@ -60,7 +87,7 @@ int main(int argc, char **argv){
     freeArray1d(x);
     freeArray1d(b);
     freeArray2d(A);
-    freeArray2d(chol);
+    freeArray2d(L);
 
     return OK;
 }

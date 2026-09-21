@@ -4,9 +4,11 @@
 
 Array2d *cholesky(Array2d *A, size_t n){
 
+    // Matriz triangular inferior
     Array2d *L = array2d_alloc(n,n);
     if(!L){return NULL;}
 
+    // Inicio del método
     double suma_diagonal, suma_cruzada;
 
     for(int j=0;j<n;j++){
@@ -34,21 +36,23 @@ Array2d *cholesky(Array2d *A, size_t n){
             L->data[i][j] = suma_cruzada / L->data[j][j];
         }
     }
-    return L;    
+    return L; // Matriz L de la factorización LL^T
 }
 
 Array1d *solveLLT(Array2d *L, Array1d *b, size_t n){
 
+    // Obtenemos la transpuesta L^T
     Array2d *LT = transpose_cuadrada(L, n);
     if(!LT) {return NULL;}
 
+    // Tolerancia por default
     double tol = epsilon();
-    Array1d *y = forwardSubstitution(L, b, tol);
+    Array1d *y = forwardSubstitution(L, b, tol); // Sustitución hacia adelante L y = b
     if(!y){
         freeArray2d(LT);
         return NULL;
     }
-    Array1d *x = backwardSubstitution(LT,y,tol);
+    Array1d *x = backwardSubstitution(LT,y,tol);    // Sustitución hacia atrás L^T x = y
     
     freeArray1d(y);
     freeArray2d(LT);
@@ -139,6 +143,7 @@ Array1d *backwardSubstitution(Array2d *U, Array1d *b, double tol){
 
 double frobenius(Array2d *A, Array2d *B){
 
+    // Tanto A como B deben ser del mismo tamaño
     if(A->cols!=B->cols || A->rows!=B->rows){
         return -1;
     }

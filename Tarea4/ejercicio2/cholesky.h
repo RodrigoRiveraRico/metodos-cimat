@@ -11,7 +11,7 @@
 /// El método indica si la matriz no es definida positivamente
 /// @param A Estructura 2D La matriz
 /// @param n size_t Tamaño de la matriz nxn
-/// @return Estrucutra 2D. La factorización LL^T
+/// @return Estrucutra 2D. La matriz L de la factorización LL^T
 /// @note El método no determina si una matriz es simétrica o no, es resposabilidad del usuario usar el método solo con matrices simétricas.
 Array2d *cholesky(Array2d *A, size_t n);
 
