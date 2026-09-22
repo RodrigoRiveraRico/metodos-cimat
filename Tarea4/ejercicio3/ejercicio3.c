@@ -102,7 +102,7 @@ int main(int argc, char **argv){
     printf("\nSolucio'n x = ");
     printArray1d(x, "% 6.2f ", 3);
     printf("\n|| Ax - b || = %.10e\n",errResidual(resultado->r,n));
-    printf("\n%d",resultado->t);
+    printf("\nNu'mero de iteraciones realizadas: <%d>",resultado->t);
 
 
     freeArray1d(b); freeArray2d(A); freeArray1d(x);
