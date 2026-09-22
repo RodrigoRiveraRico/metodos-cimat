@@ -31,11 +31,11 @@ Array1d *AxTridiagonal(Array2d *A, Array1d *x);
 /// @return Estructura que almacena: El vetor solucion. El vector residual. Número de iteraciones realizadas. Valor entero que determinar el éxito o fallo del método.
 output *solveTridiagonal(Array2d *A, Array1d *b, size_t n, Array1d *xo, int N, double tol);
 
-/// @brief Cálculo del error residual || Ax - b || en norma 2
-/// @param r Estructura 1d. Vector residual
+/// @brief Cálculo || . || norma 2 de un vector
+/// @param r Estructura 1d. Vector
 /// @param n size_t. Tamaño del vector
 /// @return double La norma 2 del vector
-double errResidual(Array1d *r, size_t n);
+double norma2(Array1d *r, size_t n);
 
 /// Devuelve el épsilon de la máquina
 double epsilon(void);

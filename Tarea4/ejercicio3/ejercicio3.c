@@ -19,8 +19,8 @@ int main(int argc, char **argv){
     output *resultado = NULL;
 
     /* Valores predeterminados */
-    int N = 100;
-    double tol = sqrt(epsilon());
+    int N = 100;                    // Número máximo de iteraciones
+    double tol = sqrt(epsilon());   // Tolerancia
 
     /*
      * Argumentos:
@@ -81,13 +81,13 @@ int main(int argc, char **argv){
     size_t n = A->rows; // Tamaño de la matriz
     printf("\nEl tamano de la matriz es <%zu>\n",n);
 
-    Array1d *x = array1d_alloc(n);  // Ya se inicializa con ceros
+    Array1d *x = array1d_alloc(n);  // Vector inicial. Inicializado en ceros
     if(!x){
         freeArray1d(b); freeArray2d(A);
         return ERROR_MEMORY;
     }
 
-    resultado = solveTridiagonal(A,b,n,x,N,tol);
+    resultado = solveTridiagonal(A,b,n,x,N,tol); // Salida del método Gauss-Seidel para resolver Ax = b con A tridiagonal
     if(!resultado){
         freeArray1d(b); freeArray2d(A); freeArray1d(x);
         return ERROR_METHOD;
@@ -101,7 +101,7 @@ int main(int argc, char **argv){
     }
     printf("\nSolucio'n x = ");
     printArray1d(x, "% 6.2f ", 3);
-    printf("\n|| Ax - b || = %.10e\n",errResidual(resultado->r,n));
+    printf("\n|| Ax - b || = %.10e\n",norma2(resultado->r,n));  // Norma 2 del vector residual
     printf("\nNu'mero de iteraciones realizadas: <%d>",resultado->t);
 
 

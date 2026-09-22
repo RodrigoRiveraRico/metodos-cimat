@@ -18,8 +18,8 @@ int main(int argc, char **argv){
     output *resultado = NULL;
 
     /* Valores predeterminados */
-    int N = 100;
-    double tol = pow(epsilon(),1.0/3.0);
+    int N = 100;                            // Número de iteraciones
+    double tol = pow(epsilon(),1.0/3.0);    // Tolerancia
 
     /*
      * Argumentos:
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
         return ERROR_MEMORY;
     }
     for(size_t i=0;i<n;i++){
-        v->data[i]=1.0;
+        v->data[i]=1.0; // v con entradas igual a 1
     }
 
     // Método de la potencia
@@ -108,6 +108,7 @@ int main(int argc, char **argv){
     printArray1d(resultado->v, "% 6.2f ", 3);  // resultado->v y v apuntan al mismo espacio de memoria
 
     // || Av - lambda v ||
+    // Obtenemos el resultado de Av
     Array1d *res_Av = Av(A,resultado->v,n); // resultado->v y v apuntan al mismo espacio de memoria
     if(!res_Av){
         freeArray2d(A);
@@ -115,6 +116,7 @@ int main(int argc, char **argv){
         free(resultado);
         return ERROR_MEMORY;
     }
+    // Obtenemos el resultado de la diferencia Av - lambda v
     double lambda = resultado->lambda;
     Array1d *diff = diferencia(res_Av,resultado->v,n,lambda); // resultado->v y v apuntan al mismo espacio de memoria
     if(!diff){
@@ -124,6 +126,7 @@ int main(int argc, char **argv){
         free(resultado);
         return ERROR_MEMORY;
     }
+    // Imprimir resultado || Av - lambda v ||
     printf("\n|| Av - lambda v ||= %.10e\n",norma2(diff,n));
     freeArray1d(res_Av);
     freeArray1d(diff);

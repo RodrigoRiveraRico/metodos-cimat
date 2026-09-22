@@ -46,6 +46,7 @@ Array1d *solveLLT(Array2d *L, Array1d *b, size_t n){
     if(!LT) {return NULL;}
 
     // Tolerancia por default
+    // Una mejor implementación es definir una MACRO de la tolerancia
     double tol = epsilon();
     Array1d *y = forwardSubstitution(L, b, tol); // Sustitución hacia adelante L y = b
     if(!y){
@@ -65,9 +66,11 @@ Array1d *solveLLT(Array2d *L, Array1d *b, size_t n){
 
 Array2d *transpose_cuadrada(Array2d *matriz, size_t n){
     
+    // Transpuesta de una matriz cuadrada.
     Array2d *transpuesta = array2d_alloc(n, n);
     if(!transpuesta){return NULL;}
 
+    // M^T_{j,i} = M_{i,j}
     for(int i=0;i<n;i++){
         for(int j=0;j<n;j++){
             transpuesta->data[j][i] = matriz->data[i][j];
@@ -83,6 +86,7 @@ Array1d *forwardSubstitution(Array2d *L, Array1d *b, double tol){
 
     size_t n = b->n;
 
+    // Vector solución
     x = array1d_alloc(n);
     if(!x){
         printf("\n%s","No hay memoria suficiente para guardar la solucio'n del sistema.");
@@ -115,6 +119,7 @@ Array1d *backwardSubstitution(Array2d *U, Array1d *b, double tol){
 
     size_t n = b->n;
 
+    // Vector solución
     x = array1d_alloc(n);
     if(!x){
         printf("\n%s","No hay memoria suficiente para guardar la solucio'n del sistema.");
@@ -151,6 +156,7 @@ double frobenius(Array2d *A, Array2d *B){
     size_t n = A->rows;
     size_t m = A->cols;
 
+    // sum_{i} suma_{j} (A_{i,j} - b_{i,j})^2
     double coef;
     double suma=0;
     for(size_t i=0;i<n;i++){
@@ -169,15 +175,19 @@ double errorResidual(Array2d *A, Array1d *x, Array1d *b){
     double r_i; /**< Entrada i-ésima del vector residual */
     double err_residual = 0;
 
+    // sum_{i}
     for(size_t i=0;i<A->rows;i++){
+        // r_{i} = sum_{j} A_{i,j} * x_{j}
         r_i = 0;
         for(size_t j=0;j<A->cols;j++){
             r_i += A->data[i][j] * x->data[j];
         }
+        // r_{i} = (Ax)_{i} - b_{i}
         r_i -= b->data[i];
+        // sum_{i} ( (Ax)_{i} - b_{i} )^2
         err_residual += r_i*r_i;
     }
-
+    // Raíz cuadrada a la suma de los cuadrados.
     err_residual = sqrt(err_residual);
 
     return err_residual;

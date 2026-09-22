@@ -36,15 +36,15 @@ int main(int argc, char **argv){
 
     printf("\nMatriz de <%zu> filas y <%zu> columnas\n", A->rows, A->cols);
 
-    printf("\n... Solving Cholesky ...\n");
+    printf("\n... Solving Cholesky ...\n"); // A = L L^T
     size_t n = A->rows; // Matriz cuadrada
-    L = cholesky(A,n);
+    L = cholesky(A,n); // L de la factorización
     if(!L){
         freeArray1d(b);
         freeArray2d(A);
         return ERROR_METHOD;
     }
-    Array2d *LT = transpose_cuadrada(L,n);
+    Array2d *LT = transpose_cuadrada(L,n);  // L^T de la factorización
     if(!LT){
         freeArray1d(b);
         freeArray2d(A);
@@ -68,7 +68,7 @@ int main(int argc, char **argv){
             }
         }
     }
-    printf("\n|| A - LL^T || = %.10e\n",frobenius(A,C));
+    printf("\n|| A - LL^T || = %.10e\n",frobenius(A,C)); // Norma de Frobenius
     freeArray2d(LT);
     freeArray2d(C);
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv){
     }
     printf("\nSolucio'n x = ");
     printArray1d(x, "% 6.2f ", 3);
-    printf("\n|| Ax - b || = %.10e\n", errorResidual(A,x,b));
+    printf("\n|| Ax - b || = %.10e\n", errorResidual(A,x,b)); // Norma 2
 
     freeArray1d(x);
     freeArray1d(b);

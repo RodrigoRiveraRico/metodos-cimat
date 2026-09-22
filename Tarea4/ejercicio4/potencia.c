@@ -4,7 +4,7 @@
 
 output *potencia(Array2d *A, size_t n, Array1d *vo, int N, double tol){
 
-    output *resultado = malloc(sizeof *resultado);
+    output *resultado = malloc(sizeof *resultado);  // Salida de la función
     if(!resultado){
         return NULL;
     }
@@ -25,6 +25,7 @@ output *potencia(Array2d *A, size_t n, Array1d *vo, int N, double tol){
         return NULL;
     }
     
+    // Iteraciones del método
     for(int k=1;k<=N;k++){
 
         // Normalización de y
@@ -51,9 +52,9 @@ output *potencia(Array2d *A, size_t n, Array1d *vo, int N, double tol){
         lambda = productoPunto(v,y,n); // lambda = < v , y >
 
 
-        // Condición de paro
+        // Condición de paro (k iteraciones)
         Array1d *diff = NULL; // y - lambda v
-        diff = diferencia(y,v,n,lambda);
+        diff = diferencia(y,v,n,lambda);    // diff = y - lambda v
         if(!diff){
             freeArray1d(y); free(resultado);
             return NULL;
@@ -70,6 +71,7 @@ output *potencia(Array2d *A, size_t n, Array1d *vo, int N, double tol){
         freeArray1d(diff);
 
     }
+    // Salida cuando se alcanza el máximo de iteraciones
     freeArray1d(y);
     resultado->k = N;
     resultado->lambda = lambda;
@@ -80,7 +82,7 @@ output *potencia(Array2d *A, size_t n, Array1d *vo, int N, double tol){
 
 Array1d *Av(Array2d *A, Array1d *v, size_t n){
 
-    Array1d *resultado = array1d_alloc(n);    // Ya está inicializado en ceros
+    Array1d *resultado = array1d_alloc(n);    // Resultado del producto Av. Se inicializa en ceros
     if(!resultado){
         return NULL;
     }
@@ -95,7 +97,7 @@ Array1d *Av(Array2d *A, Array1d *v, size_t n){
 }
 
 Array1d *diferencia(Array1d *y, Array1d *v, size_t n, double lamnda){
-    Array1d *diff = array1d_alloc(n);
+    Array1d *diff = array1d_alloc(n);   // Resultado de la diferencia y - lambda v
     if(!diff){
         return NULL;
     }

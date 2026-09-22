@@ -29,6 +29,7 @@ Array1d *solveLLT(Array2d *L, Array1d *b, size_t n);
 /// @param matriz Estructura 2D La matriz original
 /// @param n size_t El tamaño de la matriz nxn
 /// @return Estructura 2D. La matriz transpuesta
+/// @note Es responsabilidad del usuario usar la función en matrices cuadradas 
 Array2d *transpose_cuadrada(Array2d *matriz,  size_t n);
 
 /** 

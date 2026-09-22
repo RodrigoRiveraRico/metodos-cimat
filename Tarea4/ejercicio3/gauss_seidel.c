@@ -4,11 +4,11 @@
 Array1d *AxTridiagonal(Array2d *A, Array1d *x){
 
     size_t n = A->rows; // Matriz cuadrada
-    Array1d *v = array1d_alloc(n);
+    Array1d *v = array1d_alloc(n); // Resultado del producto Ax
     if(!v){
         return NULL;
     }
-
+    // Para una matriz A tridiagonal:
     // Comoponente i=0
     v->data[0] = A->data[0][0] * x->data[0] + A->data[0][1] * x->data[1];
 
@@ -30,27 +30,30 @@ output *solveTridiagonal(Array2d *A, Array1d *b, size_t n, Array1d *xo, int N, d
         return NULL;
     }
 
-    Array1d *x = xo;
+    Array1d *x = xo;    // Vector solución. Aquí se guardan las soluciones iterativas.
+                        // Inicializado con el vector inicial.
     if(!x){
         free(resultado);
         return NULL;
     }
 
-    Array1d *residual = array1d_alloc(n);
+    Array1d *residual = array1d_alloc(n);   // Vector residual = Ax - b
     if(!residual){
         free(resultado);
         return NULL;
     }
-    Array1d *v = AxTridiagonal(A,x);
+    Array1d *v = AxTridiagonal(A,x);    // Ax = v con A tridiagonal
     if(!v){
         freeArray1d(residual); free(resultado);
         return NULL;
     }
+    // Actualización r_{i} = v_{i} - b_{i}
     for(size_t i=0;i<n;i++){
         residual->data[i] = v->data[i] - b->data[i];
     }
 
-    if(fabs(errResidual(residual,n))<tol){
+    // Condición de paro antes de ejecutar el método (cero iteraciones)
+    if(fabs(norma2(residual,n))<tol){
             resultado->r = residual;
             resultado->res = EXITO;
             resultado->t = 0;
@@ -60,8 +63,10 @@ output *solveTridiagonal(Array2d *A, Array1d *b, size_t n, Array1d *xo, int N, d
             return resultado;
     }
 
+    // Iteraciones del método
     for(int t=1;t<=N;t++){
         
+        // Para una matriz A tridiagonal:
         // Para i=0
         x->data[0] = (b->data[0] - A->data[0][1] * x->data[1]) / A->data[0][0];
 
@@ -74,13 +79,15 @@ output *solveTridiagonal(Array2d *A, Array1d *b, size_t n, Array1d *xo, int N, d
         x->data[n-1] = (b->data[n-1] - A->data[n-1][n-2] * x->data[n-2]) / A->data[n-1][n-1];
 
         // Cálculo de residual
-        freeArray1d(v);
-        v = AxTridiagonal(A,x);
+        freeArray1d(v); // Liberación de v antes de guardar nueva dirección de memoria
+        v = AxTridiagonal(A,x); // Ax = v con A tridiagonal
+        // Actualización vector residual
         for(size_t i=0;i<n;i++){
            residual->data[i] = v->data[i] - b->data[i];
         }
 
-        if(fabs(errResidual(residual,n))<tol){
+        // Condición de paro (t iteraciones)
+        if(fabs(norma2(residual,n))<tol){
             resultado->r = residual;
             resultado->res = EXITO;
             resultado->t = t;
@@ -91,6 +98,7 @@ output *solveTridiagonal(Array2d *A, Array1d *b, size_t n, Array1d *xo, int N, d
         }
 
     }
+    // Paro por máximo de iteraciones realizadas
     resultado->r = residual;
     resultado->res = FALLO;
     resultado->t = N;
@@ -100,7 +108,8 @@ output *solveTridiagonal(Array2d *A, Array1d *b, size_t n, Array1d *xo, int N, d
     return resultado;
 }
 
-double errResidual(Array1d *r, size_t n){
+double norma2(Array1d *r, size_t n){
+    // Norma 2 del vector r
     double suma=0;
     for(size_t i=0;i<n;i++){
         suma += r->data[i] * r->data[i];
