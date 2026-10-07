@@ -1,0 +1,215 @@
+#include <math.h>
+#include <stdio.h>
+#include "cholesky.h"
+
+Array2d *cholesky(Array2d *A, size_t n){
+
+    // Matriz triangular inferior
+    Array2d *L = array2d_alloc(n,n);
+    if(!L){
+        printf(">>> Fallo en la asignación de memoria en Cholesky.\n");
+        return NULL;
+    }
+
+    // Inicio del método
+    double suma_diagonal, suma_cruzada;
+
+    for(int j=0;j<n;j++){
+
+        suma_diagonal = 0;
+        for(int k=0;k<j;k++){
+            suma_diagonal += L->data[j][k] * L->data[j][k];
+        }
+        suma_diagonal = A->data[j][j] - suma_diagonal;
+        if(suma_diagonal<=0){
+            printf(">>> Matriz no es definida positiva.\n");
+            freeArray2d(L);
+            return NULL;
+        }
+        
+        L->data[j][j] = sqrt(suma_diagonal);
+
+        for(int i=j+1;i<n;i++){
+
+            suma_cruzada = 0;
+            for(int k=0;k<j;k++){
+                suma_cruzada += L->data[i][k] * L->data[j][k];
+            }
+            suma_cruzada = A->data[i][j] - suma_cruzada;
+            L->data[i][j] = suma_cruzada / L->data[j][j];
+        }
+    }
+    return L; // Matriz L de la factorización LL^T
+}
+
+Array1d *solveLLT(Array2d *L, Array1d *b, size_t n){
+
+    // Obtenemos la transpuesta L^T
+    Array2d *LT = transpose_cuadrada(L, n);
+    if(!LT) {
+        printf(">>> Fallo en asignación de memoria para resolver sistema L L^T.\n");
+        return NULL;
+    }
+
+    // Tolerancia por default
+    // Una mejor implementación es definir una MACRO de la tolerancia
+    double tol = epsilon();
+    Array1d *y = forwardSubstitution(L, b, tol);    // Sustitución hacia adelante L y = b
+    if(!y){
+        freeArray2d(LT);
+        return NULL;
+    }
+    Array1d *x = backwardSubstitution(LT,y,tol);    // Sustitución hacia atrás L^T x = y
+    
+    freeArray1d(y);
+    freeArray2d(LT);
+    if(!x){
+        return NULL;
+    }
+
+    return x;
+}
+
+Array2d *transpose_cuadrada(Array2d *matriz, size_t n){
+    
+    // Transpuesta de una matriz cuadrada.
+    Array2d *transpuesta = array2d_alloc(n, n);
+    if(!transpuesta){return NULL;}
+
+    // M^T_{j,i} = M_{i,j}
+    for(int i=0;i<n;i++){
+        for(int j=0;j<n;j++){
+            transpuesta->data[j][i] = matriz->data[i][j];
+        }
+    }
+
+    return transpuesta;
+}
+
+Array1d *forwardSubstitution(Array2d *L, Array1d *b, double tol){
+
+    Array1d *x = NULL;
+
+    size_t n = b->n;
+
+    // Vector solución
+    x = array1d_alloc(n);
+    if(!x){
+        printf("\n%s","No hay memoria suficiente para guardar la solucio'n del sistema.");
+        return NULL;}
+
+    // Solución al sistema Lx = b
+    double suma;
+    for(size_t i=0;i<n;i++){
+
+        if(fabs(L->data[i][i]) < tol){
+            printf("\n%s","Divisio'n entre cero.");
+            freeArray1d(x);
+            return NULL;
+        }
+
+        suma = 0;
+        for(size_t j=0;j<i;j++){
+            suma += (L->data[i][j]) * (x->data[j]);
+        }
+        
+        x->data[i] = ((b->data[i]) - suma)/(L->data[i][i]);
+    }
+
+    return x;
+}
+
+Array1d *backwardSubstitution(Array2d *U, Array1d *b, double tol){
+
+    Array1d *x = NULL;
+
+    size_t n = b->n;
+
+    // Vector solución
+    x = array1d_alloc(n);
+    if(!x){
+        printf("\n%s","No hay memoria suficiente para guardar la solucio'n del sistema.");
+        return NULL;}
+
+    // Solución al sistema Ux = b
+    double suma;
+    for(size_t i=n;i-- > 0; ){
+
+        if(fabs(U->data[i][i]) < tol){
+            printf("\n%s","Divisio'n entre cero.");
+            freeArray1d(x);
+            return NULL;
+        }
+
+        suma = 0;
+        for(size_t j=i+1;j<n;j++){
+            suma += (U->data[i][j]) * (x->data[j]);
+        }
+        
+        x->data[i] = ((b->data[i]) - suma)/(U->data[i][i]);
+    }
+
+    return x;
+}
+
+double frobenius(Array2d *A, Array2d *B){
+
+    // Tanto A como B deben ser del mismo tamaño
+    if(A->cols!=B->cols || A->rows!=B->rows){
+        return -1;
+    }
+
+    size_t n = A->rows;
+    size_t m = A->cols;
+
+    // sum_{i} suma_{j} (A_{i,j} - b_{i,j})^2
+    double coef;
+    double suma=0;
+    for(size_t i=0;i<n;i++){
+        for(size_t j=0;j<m;j++){
+            coef = A->data[i][j] - B->data[i][j];
+            suma += coef * coef;
+        }
+    }
+    return sqrt(suma);
+
+}
+
+double errorResidual(Array2d *A, Array1d *x, Array1d *b){
+
+    // Vector residual = Ax-b
+    double r_i; /**< Entrada i-ésima del vector residual */
+    double err_residual = 0;
+
+    // sum_{i}
+    for(size_t i=0;i<A->rows;i++){
+        // r_{i} = sum_{j} A_{i,j} * x_{j}
+        r_i = 0;
+        for(size_t j=0;j<A->cols;j++){
+            r_i += A->data[i][j] * x->data[j];
+        }
+        // r_{i} = (Ax)_{i} - b_{i}
+        r_i -= b->data[i];
+        // sum_{i} ( (Ax)_{i} - b_{i} )^2
+        err_residual += r_i*r_i;
+    }
+    // Raíz cuadrada a la suma de los cuadrados.
+    err_residual = sqrt(err_residual);
+
+    return err_residual;
+}
+
+double epsilon(void){
+    
+    double eps = 0.5;
+    double unit = 1.0;
+    double val = unit + eps;
+
+    while(val > unit){
+        eps/=2;
+        val = unit + eps;
+    }
+    eps = 2*eps;
+
+    return eps;
+}
