@@ -1,6 +1,8 @@
 #include "polinomio.h"
 #include "../cholesky/cholesky.h"
 
+#include <math.h>
+
 
 Array2d *crearMatrizDiseno(Array1d *arreglo_x, int m, int n){
 
@@ -147,7 +149,7 @@ Puntos2d *readPuntos2D(const char *cfile){
     FILE     *f1 = fopen(cfile, "rb");
 
     if(!f1){
-        printf(">>> Error al abrir el archivo.\n");
+        printf(">>> Error al abrir el archivo %s\n", cfile);
         return NULL;
     }
 
@@ -197,13 +199,17 @@ Puntos2d *readPuntos2D(const char *cfile){
 
 Array1d *ejercicio1(const char * nombre_archivo, int grado_polinomio){
 
+    printf("\n>>> Ajuste de un polinomio de grado %d por minimos cuadrados <<<\n",grado_polinomio);
+
     // Guardamos los puntos del archivo en dos arreglos identificados por Puntos2D
+    printf(">>> Reading datos de %s\n",nombre_archivo);
     Puntos2d *datos = readPuntos2D(nombre_archivo);
     if(!datos){
         return NULL;
     }
 
-    // Se crea la matriz de diseño X
+    // Se crea la matriz de diseño 
+    printf(">>> Creando matriz de diseno ...\n");
     Array2d *X = crearMatrizDiseno(datos->arreglo_x,datos->m,grado_polinomio);
     if(!X){
         freeArray1d(datos->arreglo_x);
@@ -212,7 +218,8 @@ Array1d *ejercicio1(const char * nombre_archivo, int grado_polinomio){
         return NULL;
     }
 
-    // Se resuelve el problema de mínimos cuadrados
+    // Se resuelve el problema de mínimos cuadrados (Cholesky)
+    printf(">>> Resolviendo minimos cuadrados (Cholesky) ...\n");
     Array1d *coeficientes_polinomio = minimosCuadradosPolinomio(X, datos->arreglo_y, datos->m, grado_polinomio);
     if(!coeficientes_polinomio){
         freeArray1d(datos->arreglo_x);
@@ -222,16 +229,28 @@ Array1d *ejercicio1(const char * nombre_archivo, int grado_polinomio){
         return NULL;
     }
 
-    // Imprimir grado del polinomio
     // Imprimir el arreglo c
+    printf(">>> Coeficientes del polinomio (de mayor a menor grado): ");
+    printArray1d(coeficientes_polinomio," %.4e ",grado_polinomio+1);
+
     // Imprimir el error cuadrático medio
-
-    // Grabar los valores de c
-
-
+    printf(">>> Error cuadratico medio: %.6e\n",errorResidual(X, coeficientes_polinomio, datos->arreglo_y)/sqrt(datos->m));
+    
     freeArray1d(datos->arreglo_x);
     freeArray1d(datos->arreglo_y);
     free(datos);
     freeArray2d(X);
+
+    // Grabar los valores del arreglo c en archivo .bin
+    char archivo_de_salida_bin[250];
+    sprintf(archivo_de_salida_bin, "../datosTarea06/coeficientes_polinomio_grado_%d.bin", grado_polinomio);
+    
+    if(writeArray1d(coeficientes_polinomio, archivo_de_salida_bin) == 1){
+        printf(">>> Error en la escritura del archivo binario.\n");
+        freeArray1d(coeficientes_polinomio);
+        return NULL;
+    }
+    printf(">>> Exito en la escritura del archivo binario %s\n",archivo_de_salida_bin);
+
     return coeficientes_polinomio;
 }
