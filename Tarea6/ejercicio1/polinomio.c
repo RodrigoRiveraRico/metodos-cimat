@@ -197,7 +197,7 @@ Puntos2d *readPuntos2D(const char *cfile){
     return datos;
 }
 
-Array1d *ejercicio1(const char * nombre_archivo, int grado_polinomio){
+Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_polinomio){
 
     printf("\n>>> Ajuste de un polinomio de grado %d por minimos cuadrados <<<\n",grado_polinomio);
 

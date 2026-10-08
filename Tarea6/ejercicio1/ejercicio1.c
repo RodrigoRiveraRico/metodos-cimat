@@ -16,7 +16,7 @@ int main(void){
 
     // Para polinomios de grado 2, 4, y 6
     for(int grado=2;grado<=6;grado+=2){
-        coeficientes_polinomio = ejercicio1(archivo_de_punto2d_bin, grado);
+        coeficientes_polinomio = metodoMinimosCuadradosPolinomio(archivo_de_punto2d_bin, grado);
         if(!coeficientes_polinomio){
             return 1;
         }

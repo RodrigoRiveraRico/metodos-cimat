@@ -20,6 +20,6 @@ Array1d *minimosCuadradosPolinomio(Array2d *matriz, Array1d *arreglo_y, int m, i
 
 Puntos2d *readPuntos2D(const char *cfile);
 
-Array1d *ejercicio1(const char * nombre_archivo, int grado_polinomio);
+Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_polinomio);
 
 #endif
