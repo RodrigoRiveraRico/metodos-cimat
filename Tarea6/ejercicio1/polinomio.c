@@ -3,14 +3,13 @@
 
 #include <math.h>
 
-
-Array2d *crearMatrizDiseno(Array1d *arreglo_x, int m, int n){
+Array2d *crearMatrizDisenoPolinomio(Array1d *arreglo_x, int m, int n){
 
     // Asignación memoria para matriz de m x n.
     // Se inicializa en ceros.
     Array2d *matriz = array2d_alloc(m,n+1);
     if(!matriz){
-        printf(">>> No se pudo asignar memoria para la matriz de diseno\n");
+        printf("!!! No se pudo asignar memoria para la matriz de diseno\n");
         return NULL;
     }
 
@@ -39,7 +38,7 @@ Array2d *transpuestaPorMatriz(Array2d *matriz){
     // Aquí va el resultado A^T A
     Array2d * matriz_simetrica = array2d_alloc(n,n);
     if(!matriz_simetrica){
-        printf(">>> Fallo en asignación de memoria. Funcion 'transpuestaPorMatriz'\n");
+        printf("!!! Fallo en asignación de memoria. Funcion 'transpuestaPorMatriz'\n");
         return NULL;
     }
 
@@ -72,11 +71,11 @@ Array1d *matrizTranspuestaPorVector(Array2d *matriz, Array1d *vector){
     size_t m = matriz->rows;
     size_t n = matriz->cols;
 
-    // Calculamos el producto A^T x v
+    // Calculamos el producto A^T v
     // Si el vector v es de m x 1, el resultado será otro vector de tamaño n x 1
     Array1d *resultado = array1d_alloc(n);
     if(!resultado){
-        printf(">>> Fallo en asignación de memoria. Funcion 'matrizTranspuestaPorVector'\n");
+        printf("!!! Fallo en asignación de memoria. Funcion 'matrizTranspuestaPorVector'\n");
         return NULL;
     }
 
@@ -90,8 +89,7 @@ Array1d *matrizTranspuestaPorVector(Array2d *matriz, Array1d *vector){
     return resultado;
 }
 
-// No se está utilizando el parámetro m dentro de la función 
-Array1d *minimosCuadradosPolinomio(Array2d *matriz, Array1d *arreglo_y, int m, int n){
+Array1d *minimosCuadradosPolinomio(Array2d *matriz, Array1d *arreglo_y, int n){
 
     // Sistema a resolver: X^T X c = X^T y 
     // Procedemos con Cholesky: X^T X = L L^T
@@ -149,17 +147,17 @@ Puntos2d *readPuntos2D(const char *cfile){
     FILE     *f1 = fopen(cfile, "rb");
 
     if(!f1){
-        printf(">>> Error al abrir el archivo %s\n", cfile);
+        printf("!!! Error al abrir el archivo %s\n", cfile);
         return NULL;
     }
 
-    fread(&nr, sizeof(uint64_t), 1, f1);    // Renglones. Cantidad de puntos 2D
-    fread(&nc, sizeof(uint64_t), 1, f1);    // Columnas. 2 (x,y)
+    fread(&nr, sizeof(uint64_t), 1, f1);    // Renglones: Cantidad de puntos 2D
+    fread(&nc, sizeof(uint64_t), 1, f1);    // Columnas: 2 (x,y)
 
     // Puntos x_i
     arreglo_x = array1d_alloc(nr);
     if(!arreglo_x){
-        printf(">>> Fallo asignación de memoria para almacenar los puntos del archivo.\n");
+        printf("!!! Fallo asignación de memoria para almacenar los puntos del archivo.\n");
         fclose(f1);
         return NULL;
     }
@@ -167,7 +165,7 @@ Puntos2d *readPuntos2D(const char *cfile){
     // Puntos y_i
     arreglo_y = array1d_alloc(nr);
     if(!arreglo_y){
-        printf(">>> Fallo asignación de memoria para almacenar los puntos del archivo.\n");
+        printf("!!! Fallo asignación de memoria para almacenar los puntos del archivo.\n");
         fclose(f1);
         freeArray1d(arreglo_x);
         return NULL;
@@ -182,12 +180,12 @@ Puntos2d *readPuntos2D(const char *cfile){
     }
     fclose(f1);
 
-    // En una estructura devolvemos los puntos leidos
+    // En una estructura guardamos los puntos leidos
     datos = malloc(sizeof *datos);
     if(!datos){
         freeArray1d(arreglo_x);
         freeArray1d(arreglo_y);
-        printf(">>> Fallo asignación de memoria para almacenar los puntos del archivo.\n");
+        printf("!!! Fallo asignación de memoria para almacenar los puntos en estructura.\n");
         return NULL;
     }
 
@@ -210,7 +208,7 @@ Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_
 
     // Se crea la matriz de diseño 
     printf(">>> Creando matriz de diseno ...\n");
-    Array2d *X = crearMatrizDiseno(datos->arreglo_x,datos->m,grado_polinomio);
+    Array2d *X = crearMatrizDisenoPolinomio(datos->arreglo_x,datos->m,grado_polinomio);
     if(!X){
         freeArray1d(datos->arreglo_x);
         freeArray1d(datos->arreglo_y);
@@ -220,7 +218,7 @@ Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_
 
     // Se resuelve el problema de mínimos cuadrados (Cholesky)
     printf(">>> Resolviendo minimos cuadrados (Cholesky) ...\n");
-    Array1d *coeficientes_polinomio = minimosCuadradosPolinomio(X, datos->arreglo_y, datos->m, grado_polinomio);
+    Array1d *coeficientes_polinomio = minimosCuadradosPolinomio(X, datos->arreglo_y, grado_polinomio);
     if(!coeficientes_polinomio){
         freeArray1d(datos->arreglo_x);
         freeArray1d(datos->arreglo_y);
@@ -233,8 +231,8 @@ Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_
     printf(">>> Coeficientes del polinomio (de mayor a menor grado): ");
     printArray1d(coeficientes_polinomio," %.4e ",grado_polinomio+1);
 
-    // Imprimir el error cuadrático medio
-    printf(">>> Error cuadratico medio: %.6e\n",errorResidual(X, coeficientes_polinomio, datos->arreglo_y)/sqrt(datos->m));
+    // Imprimir el error cuadrático medio (RMSE)
+    printf(">>> RMSE: %.6e\n",errorResidual(X, coeficientes_polinomio, datos->arreglo_y)/sqrt(datos->m));
     
     freeArray1d(datos->arreglo_x);
     freeArray1d(datos->arreglo_y);
@@ -243,14 +241,16 @@ Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_
 
     // Grabar los valores del arreglo c en archivo .bin
     char archivo_de_salida_bin[250];
-    sprintf(archivo_de_salida_bin, "../datosTarea06/coeficientes_polinomio_grado_%d.bin", grado_polinomio);
+    sprintf(archivo_de_salida_bin, "./datosTarea06/coeficientes_polinomio_grado_%d.bin", grado_polinomio);
+    // Mejora a realizar: Tokenizar la ruta para que el archivo de salida viva en la misma carpeta que el archivo de entrada.
     
+    printf(">>> Writing resultados en %s\n",archivo_de_salida_bin);
     if(writeArray1d(coeficientes_polinomio, archivo_de_salida_bin) == 1){
-        printf(">>> Error en la escritura del archivo binario.\n");
+        printf("!!! Error en la escritura del archivo binario.\n");
         freeArray1d(coeficientes_polinomio);
         return NULL;
     }
-    printf(">>> Exito en la escritura del archivo binario %s\n",archivo_de_salida_bin);
+    printf(">>> Exito en la escritura del archivo binario\n");
 
     return coeficientes_polinomio;
 }

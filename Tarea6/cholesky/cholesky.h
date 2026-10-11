@@ -4,6 +4,8 @@
 #include "../arrays/array2D.h"
 #include "../arrays/array1D.h"
 
+#define TOL 2.22E-16    // Tolerancia para evitar división entre cero
+
 /// @brief Método de cholesky A = LL^T
 ///
 /// El método funciona con matrices simétricas y definidas positivamente.
@@ -80,6 +82,4 @@ double frobenius(Array2d *A, Array2d *B);
 /// @return double El error residual
 double errorResidual(Array2d *A, Array1d *x, Array1d *b);
 
-// Devuelve el épsilon de la máquina
-double epsilon(void);
 #endif

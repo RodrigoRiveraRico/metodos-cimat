@@ -4,10 +4,7 @@
 
 #include <math.h>
 
-// símbolo θ
-
-// arreglo de puntos, tamaño 
-double centroide(Array1d *arreglo, int m){
+double promedio(Array1d *arreglo, int m){
     double sum = 0;
     for(int i=0;i<m;i++){
         sum += arreglo->data[i];
@@ -15,7 +12,6 @@ double centroide(Array1d *arreglo, int m){
     return sum / (double)m;
 }
 
-// merge puntos en un array
 Array1d *mergePuntos2DTo1D(Array1d *arreglo_x, Array1d *arreglo_y, int m){
     
     // Los puntos x_i, y_i aparecen consecutivamente
@@ -31,7 +27,6 @@ Array1d *mergePuntos2DTo1D(Array1d *arreglo_x, Array1d *arreglo_y, int m){
     return z;
 }
 
-// abcisas, ordenadas, numero de puntos, (x^barra, y^barra)
 Array2d *crearMatrizDisenoCirculo(Array1d *arreglo_x, Array1d *arreglo_y, int m, double x_barra, double y_barra){
 
     // Matriz de diseño de tamaño 2*m x 3
@@ -42,7 +37,7 @@ Array2d *crearMatrizDisenoCirculo(Array1d *arreglo_x, Array1d *arreglo_y, int m,
 
     // Llenamos de 1's donde corresponde
     for(int i=0;i<2*m;i++){    // Renglones
-        int j = i % 2;          // Columna 
+        int j = i % 2;         // Columna 
         X->data[i][j] = 1;
     }
 
@@ -57,9 +52,7 @@ Array2d *crearMatrizDisenoCirculo(Array1d *arreglo_x, Array1d *arreglo_y, int m,
     return X;
 }
 
-// [c_1 c_2 c_3]
-// Matriz de diseño, arreglo que se debe predecir, numero de puntos
-Array1d *minimosCuadradosCirculo(Array2d *X, Array1d *z, int m){
+Array1d *minimosCuadradosCirculo(Array2d *X, Array1d *z){
 
     // Sistema a resolver: X^T X c = X^T z
     // Procedemso con Cholesky: X^T X = L L^T
@@ -106,9 +99,13 @@ Array1d *minimosCuadradosCirculo(Array2d *X, Array1d *z, int m){
 Array1d *metodoMinimosCuadradosCirculo(const char *nombre_archivo, int N, double tol){
 
     // Implementación para la tarea que busca utilizar el ajuste a puntos en una circunferencia en el ajuste a puntos en un arco de circunferencia
+    // c1 componente x del centro
+    // c2 componente y del centro
+    // c3 radio
+    // static inicializa en cero
     static double c1, c2, c3;
-    static int flag;    // static inicializa en cero
-    printf("\n# c1=%f c2=%f c3=%f ", c1, c2, c3);
+    static int flag;    
+    // printf("\n### c1 = %f c2 = %f c3 = %f", c1, c2, c3);   // Visualización valor coeficientes cada que se entra a la función.
     
     printf("\n>>> Ajuste de un circulo por minimos cuadrados.\n    Archivo %s\n    Numero de iteraciones: %d\n    Tolerancia %.3e <<<\n\n", nombre_archivo, N, tol);
 
@@ -138,20 +135,20 @@ Array1d *metodoMinimosCuadradosCirculo(const char *nombre_archivo, int N, double
         if(iter == 1){
             if(flag == 0){
                 // Ini de centro del círculo: Centroide de los datos
-                x_barra = centroide(datos->arreglo_x, datos->m);
-                y_barra = centroide(datos->arreglo_y, datos->m);
+                x_barra = promedio(datos->arreglo_x, datos->m);
+                y_barra = promedio(datos->arreglo_y, datos->m);
                 flag = 1;
             }
             else{
-                // Ini de centro del círculo: Coeficientes solución del primer archivo .bin
+                // Ini de centro del círculo: Coeficientes solución del primer archivo .bin / primera llamada a la función
                 x_barra = c1;
                 y_barra = c2;
             }
         }
         else{
             // Siguientes iteraciones se utiliza la aproximación obtenida
-            x_barra = coeficientes->data[0];    // c_1
-            y_barra = coeficientes->data[1];    // c_2
+            x_barra = coeficientes->data[0];    // c1
+            y_barra = coeficientes->data[1];    // c2
             freeArray1d(coeficientes);          // Hay que liberar la memoria reservada de la iteración anterior
             coeficientes = NULL;
         }
@@ -171,7 +168,7 @@ Array1d *metodoMinimosCuadradosCirculo(const char *nombre_archivo, int N, double
 
         // Se resuelve el problema de mínimos cuadrados (Cholesky)
         printf("\t>>> Resolviendo minimos cuadrados (Cholesky) ...\n");
-        coeficientes = minimosCuadradosCirculo(X, z, datos->m);
+        coeficientes = minimosCuadradosCirculo(X, z);
         if(!coeficientes){
             freeArray1d(datos->arreglo_x);
             freeArray1d(datos->arreglo_y);

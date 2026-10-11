@@ -51,15 +51,12 @@ Array1d *solveLLT(Array2d *L, Array1d *b, size_t n){
         return NULL;
     }
 
-    // Tolerancia por default
-    // Una mejor implementación es definir una MACRO de la tolerancia
-    double tol = epsilon();
-    Array1d *y = forwardSubstitution(L, b, tol);    // Sustitución hacia adelante L y = b
+    Array1d *y = forwardSubstitution(L, b, TOL);    // Sustitución hacia adelante L y = b
     if(!y){
         freeArray2d(LT);
         return NULL;
     }
-    Array1d *x = backwardSubstitution(LT,y,tol);    // Sustitución hacia atrás L^T x = y
+    Array1d *x = backwardSubstitution(LT, y, TOL);    // Sustitución hacia atrás L^T x = y
     
     freeArray1d(y);
     freeArray2d(LT);
@@ -197,19 +194,4 @@ double errorResidual(Array2d *A, Array1d *x, Array1d *b){
     err_residual = sqrt(err_residual);
 
     return err_residual;
-}
-
-double epsilon(void){
-    
-    double eps = 0.5;
-    double unit = 1.0;
-    double val = unit + eps;
-
-    while(val > unit){
-        eps/=2;
-        val = unit + eps;
-    }
-    eps = 2*eps;
-
-    return eps;
 }

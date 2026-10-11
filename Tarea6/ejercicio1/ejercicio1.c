@@ -3,13 +3,17 @@
 #include "polinomio.h"
 
 /* 
-gcc .\ejercicio1.c .\polinomio.c ..\arrays\array1D.c ..\arrays\array2D.c ..\cholesky\cholesky.c -lm -o .\ejercicio1 & .\ejercicio1
+gcc .\ejercicio1.c .\polinomio.c ..\arrays\array1D.c ..\arrays\array2D.c ..\cholesky\cholesky.c -lm -o .\ejercicio1 & .\ejercicio1 ..\datosTarea06\puntos2D.bin
 */
+int main(int argc, char **argv){
 
-int main(void){
+    if(argc<2){
+        printf("Hay que proporcionar como parámetro el archivo binario que contiene los puntos a ajustar.");
+        return 1;
+    }
 
     // Nombre del archivo .bin de los datos por ajustar
-    const char *archivo_de_punto2d_bin = "../datosTarea06/puntos2D.bin";
+    const char *archivo_de_punto2d_bin = argv[1];
 
     // Aquí se guardan los coeficientes del polinomio ajustado
     Array1d *coeficientes_polinomio = NULL;
