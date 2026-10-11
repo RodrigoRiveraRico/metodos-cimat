@@ -2,6 +2,7 @@
 #include "../cholesky/cholesky.h"
 
 #include <math.h>
+#include <string.h>
 
 Array2d *crearMatrizDisenoPolinomio(Array1d *arreglo_x, int m, int n){
 
@@ -195,13 +196,13 @@ Puntos2d *readPuntos2D(const char *cfile){
     return datos;
 }
 
-Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_polinomio){
+Array1d *metodoMinimosCuadradosPolinomio(const char * ruta_archivo_entrada, int grado_polinomio){
 
     printf("\n>>> Ajuste de un polinomio de grado %d por minimos cuadrados <<<\n",grado_polinomio);
 
     // Guardamos los puntos del archivo en dos arreglos identificados por Puntos2D
-    printf(">>> Reading datos de %s\n",nombre_archivo);
-    Puntos2d *datos = readPuntos2D(nombre_archivo);
+    printf(">>> Reading datos de %s\n",ruta_archivo_entrada);
+    Puntos2d *datos = readPuntos2D(ruta_archivo_entrada);
     if(!datos){
         return NULL;
     }
@@ -241,9 +242,10 @@ Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_
 
     // Grabar los valores del arreglo c en archivo .bin
     char archivo_de_salida_bin[250];
-    sprintf(archivo_de_salida_bin, "./datosTarea06/coeficientes_polinomio_grado_%d.bin", grado_polinomio);
-    // Mejora a realizar: Tokenizar la ruta para que el archivo de salida viva en la misma carpeta que el archivo de entrada.
-    
+    char nombre_archivo[100];
+    sprintf(nombre_archivo, "coeficientes_polinomio_grado_%d.bin", grado_polinomio);
+    crearRutaArchivoSalida(ruta_archivo_entrada, archivo_de_salida_bin, nombre_archivo);
+
     printf(">>> Writing resultados en %s\n",archivo_de_salida_bin);
     if(writeArray1d(coeficientes_polinomio, archivo_de_salida_bin) == 1){
         printf("!!! Error en la escritura del archivo binario.\n");
@@ -253,4 +255,40 @@ Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_
     printf(">>> Exito en la escritura del archivo binario\n");
 
     return coeficientes_polinomio;
+}
+
+int crearRutaArchivoSalida(const char *ruta_archivo_entrada, char *ruta_archivo_salida, char *nombre_archivo) {
+    const char *origen = ruta_archivo_entrada;
+    char *destino = ruta_archivo_salida;
+
+    // 1. Buscamos la última diagonal normal '/'
+    const char *ultima_diagonal = strrchr(origen, '/');
+    
+    // 2. Si no la encuentra, buscamos la diagonal invertida '\' por si acaso es Windows
+    if (ultima_diagonal == NULL) {
+        ultima_diagonal = strrchr(origen, '\\');
+    }
+
+    if (ultima_diagonal != NULL) {
+        // --- CASO CON RUTA ---
+        // Calcular cuántos caracteres componen la ruta de la carpeta (incluyendo la diagonal)
+        int longitud_ruta = ultima_diagonal - origen + 1;
+
+        // Copiamos la parte de la carpeta
+        strncpy(destino, origen, longitud_ruta);
+        destino[longitud_ruta] = '\0'; 
+
+        // Concatenamos
+        strcat(destino, nombre_archivo);
+    } else {
+        // --- CASO SIN RUTA (El archivo se pasa directamente, ej: "circunferencia1.bin") ---
+        // Simplemente colocamos el nombre del archivo
+        strcpy(destino, nombre_archivo);
+    }
+
+    // Mostrar resultados para verificar
+    // printf("Original:  %s\n", origen);
+    // printf("Resultado: %s\n", destino);
+
+    return 0; // Éxito en cualquier escenario
 }

@@ -1,10 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "circulo.h"
 
 /* 
 gcc .\ejercicio2.c .\circulo.c  ..\ejercicio1\polinomio.c ..\arrays\array1D.c ..\arrays\array2D.c ..\cholesky\cholesky.c -lm -o .\ejercicio2 & .\ejercicio2 ..\datosTarea06\circunferencia1.bin ..\datosTarea06\circunferencia2.bin 30 0.01
 */
+
+/**
+ * @brief Función que crea la ruta de los archivos de salida
+ * 
+ * La función tiene como objetivo crear la ruta del archivo de salida de modo que el archivo de salida viva en la misma carpeta del archivo de entrada.
+ * 
+ * La función concatena la cadena "coeficientes_" al inicio del nombre del archivo de salida.
+ * 
+ * @param ruta_archivo_entrada string Ruta archivo entrada
+ * @param ruta_archivo_salida string Dirección de memoria dónde guardar la ruta del archivo de salida
+ * @return int
+ * @retval 0 en caso de éxito
+ * @retval 1 en caso de fallo
+ */
+int crearRutaArchivoSalidaConcat(const char *ruta_archivo_entrada, char *ruta_archivo_salida);
 
 int main(int argc, char **argv){
 
@@ -57,10 +73,10 @@ int main(int argc, char **argv){
     //////////////////////////////////////////////////////////
 
     // Nombre del archivo .bin de los datos por ajustar (circunferencia)
-    const char *archivo_de_puntos_circulo_bin = argv[1];     // "../datosTarea06/circunferencia1.bin"
+    const char *archivo_de_puntos_circulo_bin = argv[1];    // "../datosTarea06/circunferencia1.bin"
     // Nombre del archivo .bin de los coeficientes ajustados (circunferencia)
-    const char *archivo_de_salida_circulo_bin = "./datosTarea06/coeficientes_circunferencia1.bin";
-    // Hay que tokenizar para construir la ruta del archivo de salida.
+    char archivo_de_salida_circulo_bin[256];
+    crearRutaArchivoSalidaConcat(archivo_de_puntos_circulo_bin, archivo_de_salida_circulo_bin);   // "../datosTarea06/coeficientes_circunferencia1.bin";
 
     Array1d *coeficientes = metodoMinimosCuadradosCirculo(archivo_de_puntos_circulo_bin, N, tol);
     if(!coeficientes){
@@ -83,10 +99,10 @@ int main(int argc, char **argv){
     //////////////////////////////////////////////////////////
 
     // Nombre del archivo .bin de los datos por ajustar (arco)
-    const char *archivo_de_puntos_arco_bin = argv[2];    // "../datosTarea06/circunferencia2.bin";
+    const char *archivo_de_puntos_arco_bin = argv[2];   // "../datosTarea06/circunferencia2.bin";
     // Nombre del archivo .bin de los coeficientes ajustados (arco)
-    const char *archivo_de_salida_arco_bin = "./datosTarea06/coeficientes_circunferencia2.bin";
-    // Hay que tokenizar para construir la ruta del archivo de salida.
+    char archivo_de_salida_arco_bin[256];
+    crearRutaArchivoSalidaConcat(archivo_de_puntos_arco_bin, archivo_de_salida_arco_bin);     // "../datosTarea06/coeficientes_circunferencia2.bin";
 
     coeficientes = metodoMinimosCuadradosCirculo(archivo_de_puntos_arco_bin, N, tol);
     if(!coeficientes){
@@ -104,4 +120,42 @@ int main(int argc, char **argv){
     freeArray1d(coeficientes);
 
     return 0;
+}
+
+int crearRutaArchivoSalidaConcat(const char *ruta_archivo_entrada, char *ruta_archivo_salida) {
+    const char *origen = ruta_archivo_entrada;
+    char *destino = ruta_archivo_salida;
+
+    // 1. Buscamos la última diagonal normal '/'
+    const char *ultima_diagonal = strrchr(origen, '/');
+    
+    // 2. Si no la encuentra, buscamos la diagonal invertida '\' por si acaso es Windows
+    if (ultima_diagonal == NULL) {
+        ultima_diagonal = strrchr(origen, '\\');
+    }
+
+    if (ultima_diagonal != NULL) {
+        // --- CASO CON RUTA ---
+        // Calcular cuántos caracteres componen la ruta de la carpeta (incluyendo la diagonal)
+        int longitud_ruta = ultima_diagonal - origen + 1;
+
+        // Copiamos la parte de la carpeta
+        strncpy(destino, origen, longitud_ruta);
+        destino[longitud_ruta] = '\0'; 
+
+        // Concatenamos el prefijo y el nombre del archivo
+        strcat(destino, "coeficientes_");
+        strcat(destino, ultima_diagonal + 1);
+    } else {
+        // --- CASO SIN RUTA (El archivo se pasa directamente, ej: "circunferencia1.bin") ---
+        // Simplemente unimos el prefijo con el nombre directamente
+        strcpy(destino, "coeficientes_");
+        strcat(destino, origen);
+    }
+
+    // Mostrar resultados para verificar
+    // printf("Original:  %s\n", origen);
+    // printf("Resultado: %s\n", destino);
+
+    return 0; // Éxito en cualquier escenario
 }

@@ -119,6 +119,20 @@ Puntos2d *readPuntos2D(const char *cfile);
  * @note No olvidar incluir la extensión .bin
  * @note Ver función readPuntos2D para tener información sobre el archivo binario de lectura.
  */
-Array1d *metodoMinimosCuadradosPolinomio(const char * nombre_archivo, int grado_polinomio);
+Array1d *metodoMinimosCuadradosPolinomio(const char * ruta_archivo_entrada, int grado_polinomio);
+
+/**
+ * @brief Función que crea la ruta del archivo de salida.
+ * 
+ * La función tiene como objetivo crear la ruta del archivo de salida de modo que el archivo de salida viva en la misma carpeta del archivo de entrada.
+ * 
+ * @param ruta_archivo_entrada string Ruta archivo entrada
+ * @param ruto_archivo_salida string Dirección de memoria dónde guardar la ruta del archivo de salida
+ * @param nombre_archivo string Nombre que llevará el archivo de salida
+ * @return int
+ * @retval 0 en caso de éxito
+ * @retval 1 en caso de fallo
+ */
+int crearRutaArchivoSalida(const char *ruta_archivo_entrada, char *ruta_archivo_salida, char *nombre_archivo);
 
 #endif
