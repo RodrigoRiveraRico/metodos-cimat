@@ -1,5 +1,7 @@
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /////////////////////////////////////////////////////////
 
@@ -11,75 +13,105 @@ typedef struct {
 
 /////////////////////////////////////////////////////////
 
-tabla *crearTabla(int n);
-void llenarTabla(tabla *tabla, double *arreglo_x, double *arreglo_y, int n);
-double evalPol(tabla *tabla, double *arreglo_x, int n, double x);
-void freeTabla(tabla *tabla);
-void printfTabla(tabla *tabla);
-
+double **crearTabla(int n);
+void llenarTabla(double **data, double *arreglo_x, double *arreglo_y, int n);
+double llenarTablaRec(double **data, double *arreglo_x, double *arreglo_y, int n, int m);
+/** 
+ * @brief Función que hace la evaluación en el polinomio de interpolación del método de diferencias divididas. 
+ * 
+ * La evaluación se hace con el método de Horner.
+ * @param tabla Tabla con las diferencias dividas dispuestas de forma triangular inferior.
+ * @param arreglo_x
+ * @param n int
+ * @param x double
+ * @return double La evaluación P(x)
+ */
+double evalPol(double **data, double *arreglo_x, int n, double x);
+void freeTabla(double **data, int n);
+void printfTabla(double **data, int n);
+double errorAbs(double real, double aprox);
+void tablaResultados(double x, double (*f)(double), double eval_pol, double error, double cota);
 
 /////////////////////////////////////////////////////////
 
 int main(void){
 
     /********************************************************/
-
+/*   
     int    n         = 4;
     double nodos[]   = {1.0, 3.0, 4.0, 8.0};    // Puntos en x
     double valores[] = {2.0, 3.0, 2.0, 10.0};   // Puntos en y
 
+    int    n         = 5;
+    double nodos[]   = {1.0, 1.3, 1.6, 1.9, 2.2};    // Puntos en x
+    double valores[] = {0.7651977, 0.6200860, 0.4554022, 0.2818186, 0.1103623};   // Puntos en y
+*/
+       
+    int    n         = 5;
+    double nodos[]   = {0.0, 1.0/4.0, 1.0/2.0, 3.0/4.0, 1.0};    // Puntos en x
+    double valores[] = {exp(0.0), exp(1.0/4.0), exp(1.0/2.0), exp(3.0/4.0), exp(1.0)};   // Puntos en y
+
     /********************************************************/
 
-    tabla *diferencias = crearTabla(n);
-    if (!diferencias) {
+    tabla diferencias;
+    diferencias.n = n;
+    diferencias.data = crearTabla(n);
+
+    if (!diferencias.data) {
         printf("Error al asignar memoria.\n");
         return 1;
     }
-    llenarTabla(diferencias, nodos, valores, n);
-    printfTabla(diferencias);
 
-    double p = 10.0;
-    double eval = evalPol(diferencias, nodos, n, p);
-    printf("%f ", eval);
+    /*
+    llenarTabla(diferencias.data, nodos, valores, n);
+    printfTabla(diferencias.data, n);
+    */
+    llenarTablaRec(diferencias.data, nodos, valores, n-1, n-1);
+    printfTabla(diferencias.data, n);
 
+    // double p_x = 1.5;
+    double puntos[] = {0.10, 0.35, 0.60, 0.90};
+    for(int i=0;i<4;i++){
+        double eval = evalPol(diferencias.data, nodos, n, puntos[i]);
+        double error_abs = errorAbs(exp(puntos[i]), eval);
 
-    freeTabla(diferencias);
+        tablaResultados(puntos[i], exp, eval, error_abs, -1);
+    }
+    
+    freeTabla(diferencias.data, diferencias.n);
     return 0;
 }
 
-tabla *crearTabla(int n){
-    tabla  *new_tabla = malloc(sizeof *new_tabla);
-    if(!new_tabla){
-        return NULL;
-    }
-    new_tabla->n = n;
-    new_tabla->data = malloc(n * sizeof *new_tabla->data);
-    if(!new_tabla->data){
-        free(new_tabla);
+/***********************************************************
+/     Funciones para el método de diferencias divididas    /
+***********************************************************/
+
+double **crearTabla(int n){
+    double **data = malloc(n * sizeof *data);
+    if(!data){
         return NULL;
     }
 
     for(int i=0;i<n;i++){
         // Reservamos espacio de forma triangular: fila i tiene (i+1) columnas
-        new_tabla->data[i] = calloc((i+1), sizeof(double));
-        if(!new_tabla->data[i]){
+        data[i] = calloc((i+1), sizeof(double));
+        if(!data[i]){
             for(int j=0;j<i;j++){
-                free(new_tabla->data[j]);
+                free(data[j]);
             }
-            free(new_tabla->data);
-            free(new_tabla);
+            free(data);
             return NULL;
         }
     }
-    return new_tabla;
+    return data;
 }
 
-void llenarTabla(tabla *tabla, double *arreglo_x, double *arreglo_y, int n){
+void llenarTabla(double **data, double *arreglo_x, double *arreglo_y, int n){
 
     // 1. Colocar las condiciones iniciales (columna 0)
     for (int i = 0; i < n; i++)
     {
-        tabla->data[i][0] = arreglo_y[i];
+        data[i][0] = arreglo_y[i];
     }
 
     // 2. Calcular las diferencias divididas (columnas > 0)
@@ -89,44 +121,77 @@ void llenarTabla(tabla *tabla, double *arreglo_x, double *arreglo_y, int n){
     {
         for (int i = j; i < n; i++)
         {
-            double numerador = tabla->data[i][j - 1] - tabla->data[i - 1][j - 1];
+            double numerador = data[i][j - 1] - data[i - 1][j - 1];
             double denominador = arreglo_x[i] - arreglo_x[i - j];
-            tabla->data[i][j] = numerador / denominador;
+            data[i][j] = numerador / denominador;   // Division entre cero?
         }
     }
 }
 
-double evalPol(tabla *tabla, double *arreglo_x, int n, double x){
+double llenarTablaRec(double **data, double *arreglo_x, double *arreglo_y, int n, int m){
 
-    // Ciclo de la suma
-    double suma = tabla->data[0][0];    // F[0,0]
-    for(int i=1;i<n;i++){
-        // Ciclo del producto
-        double producto = 1;
-        for(int j=0;j<i;j++){
-            producto *= (x - arreglo_x[j]);
-        }
-        producto *= tabla->data[i][i];
-        suma += producto;
-        printf("%f ",suma); // Al final se está haciendo cero, ¿por qué?
+    // Caso base
+    // Primera columna
+    if(m==0){
+        data[n][m] = arreglo_y[n];
+        return arreglo_y[n];
     }
+
+    // Recursividad
+    double izq = llenarTablaRec(data, arreglo_x, arreglo_y, n, m-1);
+    double der = llenarTablaRec(data, arreglo_x, arreglo_y, n-1, m-1);
+    double divisor = arreglo_x[n] - arreglo_x[n-m];
+
+    double coef = (izq - der) / divisor;
+    
+    data[n][m] = coef;
+
+    return coef;
 }
 
-void freeTabla(tabla *tabla){
-    if(!tabla) return;
-    for(int i=0; i<tabla->n; i++){
-        free(tabla->data[i]);
+double evalPol(double **data, double *arreglo_x, int n, double x){
+    double eval = data[n-1][n-1];
+    for(int i = n-2; i >= 0; i--){
+        eval = eval * (x - arreglo_x[i]) + data[i][i];
     }
-    free(tabla->data);
-    free(tabla);
+    return eval;
+}   
+
+void freeTabla(double **data, int n){
+    if(!data) return;
+    for(int i=0; i<n; i++){
+        free(data[i]);
+    }
+    free(data);
 }
 
-void printfTabla(tabla *tabla){
+void printfTabla(double **data, int n){
     printf("--- Tabla de Diferencias Divididas ---\n");
-    for(int i=0; i<tabla->n; i++){
+    for(int i=0; i<n; i++){
         for(int j=0; j<=i; j++){
-            printf("%10.4f ", tabla->data[i][j]);
+            printf("%14.4e ", data[i][j]);
         }
         printf("\n");
     }
+    printf("\n");
+}
+
+double errorAbs(double real, double aprox){
+    return fabs(real-aprox);
+}
+
+
+/***********************************************************
+/            Funciones para probar el método               /
+***********************************************************/
+void tablaResultados(double x, double (*f)(double), double eval_pol, double error, double cota){
+    static int flag = 0;
+    // Encabezado
+    if(flag==0){
+        printf("\n--------------------------------\n");
+        printf(" x | f(x) | P(x) |  |f(x) - P(x)|  |  cota \n");
+        flag = 1;
+    }
+    // Cuerpo
+    printf("%.4e   %.4e   %.4e   %.4e   %.4e \n", x, f(x), eval_pol, error, cota);
 }
